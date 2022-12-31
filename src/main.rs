@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 #[macro_use]
 extern crate diesel;
 
@@ -7,5 +8,11 @@ mod db;
 use db::*;
 
 fn main() {
-    init_db();
+    let conn =&mut init_db();
+
+    let title = "Having Dinner";
+    let content = "At 20:00 today";
+    create_todo_item(conn, title, content).expect("create todo item failed");
+    
+    get_all_item(conn);
 }

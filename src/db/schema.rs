@@ -1,8 +1,8 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    todo_items (id) {
-        id -> BigInt,
+    items (id) {
+        id -> Integer,
         title -> Text,
         content -> Text,
     }

@@ -1,8 +1,16 @@
-use super::schema::todo_items;
+use super::schema::items;
+use diesel::prelude::*;
 
 #[derive(Queryable)]
-pub struct TodoItem {
-    pub id: i64,
+pub struct Item {
+    pub id: i32,
     pub title: String,
     pub content: String,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = items)]
+pub struct NewItem<'a> {
+    pub title: &'a str,
+    pub content: &'a str,
 }

@@ -1,6 +1,6 @@
 -- Your SQL goes here
-CREATE TABLE todo_items (
-    id BIGINT NOT NULL PRIMARY KEY,
+CREATE TABLE items (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     title VARCHAR NOT NULL,
     content TEXT NOT NULL
 )

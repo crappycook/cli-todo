@@ -1,9 +1,12 @@
 pub mod models;
 pub mod schema;
 
+use self::models::*;
+use self::schema::*;
+use core::str;
 use diesel::prelude::*;
 use dotenvy::dotenv;
-use std::{env, process};
+use std::{env, error::Error, process};
 
 // Getting Started: https://diesel.rs/guides/getting-started
 pub struct Config {
@@ -13,7 +16,7 @@ pub struct Config {
 // init db connection
 pub fn init_db() -> SqliteConnection {
     let cfg = parse_config().unwrap_or_else(|err| {
-        eprintln!("Problem parsing arguments: {err}");
+        eprintln!("Problem parsing configs: {err}");
         process::exit(1)
     });
 
@@ -40,4 +43,46 @@ pub fn establish_connection(db_cfg: &Config) -> SqliteConnection {
         eprintln!("Connect sqlite error: {err}");
         process::exit(1)
     })
+}
+
+pub fn create_todo_item(
+    conn: &mut SqliteConnection,
+    title: &str,
+    content: &str,
+) -> Result<(), Box<dyn Error>> {
+    let new_item = NewItem { title, content };
+
+    diesel::insert_into(items::table)
+        .values(&new_item)
+        .execute(conn)?;
+
+    Ok(())
+}
+
+pub fn get_all_item(conn: &mut SqliteConnection) {
+    use self::schema::items::dsl::*;
+
+    let records: Vec<Item> = items
+        .order(id.desc())
+        .limit(10)
+        .load::<Item>(conn)
+        .expect("Error loading posts");
+
+    for r in records {
+        println!("title: {}, content: {}", r.title, r.content);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_insert_item() {
+        use super::*;
+
+        let conn = &mut init_db();
+        let title = "Play Football";
+        let content = "At 15:00 this Friday";
+
+        assert_eq!(create_todo_item(conn, title, content).is_ok(), true);
+    }
 }
