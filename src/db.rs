@@ -3,26 +3,41 @@ pub mod schema;
 
 use diesel::prelude::*;
 use dotenvy::dotenv;
-use std::env;
+use std::{env, process};
 
 // Getting Started: https://diesel.rs/guides/getting-started
-
-struct Config {
+pub struct Config {
     db_url: String,
 }
 
-fn parse_config() -> Config {
-    dotenv().ok();
+// init db connection
+pub fn init_db() -> SqliteConnection {
+    let cfg = parse_config().unwrap_or_else(|err| {
+        eprintln!("Problem parsing arguments: {err}");
+        process::exit(1)
+    });
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    
-    Config {
-        db_url: database_url.clone(),
-    }
+    establish_connection(&cfg)
 }
 
-pub fn establish_connection() -> SqliteConnection {
-    let cfg = parse_config();
-    SqliteConnection::establish(cfg.db_url.as_str())
-        .unwrap_or_else(|_| panic!("Error connecting to {}", cfg.db_url))
+// parse db config
+fn parse_config() -> Result<Config, String> {
+    dotenv().ok();
+
+    let database_url = match env::var("DATABASE_URL") {
+        Ok(url) => url,
+        Err(err) => return Err(err.to_string()),
+    };
+
+    Ok(Config {
+        db_url: database_url.clone(),
+    })
+}
+
+// connect sqlite
+pub fn establish_connection(db_cfg: &Config) -> SqliteConnection {
+    SqliteConnection::establish(db_cfg.db_url.as_str()).unwrap_or_else(|err| {
+        eprintln!("Connect sqlite error: {err}");
+        process::exit(1)
+    })
 }

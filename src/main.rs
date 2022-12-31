@@ -7,5 +7,5 @@ mod db;
 use db::*;
 
 fn main() {
-    println!("Hello, world!");
+    init_db();
 }
