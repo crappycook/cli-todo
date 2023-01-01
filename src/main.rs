@@ -8,11 +8,12 @@ mod db;
 use db::*;
 
 fn main() {
-    let conn =&mut init_db();
+    let conn = &mut init_db();
 
-    let title = "Having Dinner";
-    let content = "At 20:00 today";
-    create_todo_item(conn, title, content).expect("create todo item failed");
-    
+    let exist = check_table_exist(conn);
+    println!("table [items] exists: {}", exist);
+
+    println!("items count = {}", get_all_count(conn).unwrap());
+
     get_all_item(conn);
 }
