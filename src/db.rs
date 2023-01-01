@@ -109,7 +109,16 @@ pub fn check_table_exist(conn: &mut SqliteConnection) -> bool {
     let res = diesel::sql_query(sql)
         .load::<QueryTableCount>(conn)
         .unwrap();
-    return res.len() == 1;
+    res.len() == 1
+}
+
+// Create items table if not exists
+pub fn create_table_if_not_exists(conn: &mut SqliteConnection) -> bool {
+    let sql = "CREATE TABLE IF NOT EXISTS `items` \
+    (`id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, `title` VARCHAR NOT NULL, `content` TEXT NOT NULL)";
+    let res = diesel::sql_query(sql).execute(conn);
+    println!("create table result {:?}", res);
+    res.is_ok()
 }
 
 // Query all items count

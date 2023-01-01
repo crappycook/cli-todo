@@ -21,8 +21,3 @@ pub struct NewItem<'a> {
     pub title: &'a str,
     pub content: &'a str,
 }
-#[derive(Queryable, Debug)]
-pub struct SqlMaster {
-    pub name: String,
-    pub sql: String,
-}

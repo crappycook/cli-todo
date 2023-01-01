@@ -5,13 +5,20 @@ extern crate diesel;
 // extern crate dotenv;
 
 mod db;
+use std::process;
+
 use db::*;
 
 fn main() {
     let conn = &mut init_db();
 
-    let exist = check_table_exist(conn);
-    println!("table [items] exists: {}", exist);
+    if !check_table_exist(conn) {
+        println!("our table not exists");
+        if !create_table_if_not_exists(conn) {
+            eprintln!("Create todo items table failed!");
+            process::exit(1);
+        }
+    }
 
     println!("items count = {}", get_all_count(conn).unwrap());
 
