@@ -4,10 +4,11 @@ extern crate diesel;
 
 // extern crate dotenv;
 
+mod cmd;
 mod db;
-use std::process;
 
 use db::*;
+use std::process;
 
 fn main() {
     let conn = &mut init_db();
@@ -23,4 +24,6 @@ fn main() {
     println!("items count = {}", get_all_count(conn).unwrap());
 
     get_all_item(conn);
+
+    cmd::run();
 }
