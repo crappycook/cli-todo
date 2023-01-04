@@ -1,4 +1,6 @@
+use crate::db::{models::Item, *};
 use clap::{Args, Parser, Subcommand};
+use std::process;
 
 #[derive(Parser)]
 #[command(author = "oasis")]
@@ -23,36 +25,58 @@ enum Commands {
 #[derive(Args)]
 struct Adder {
     /// Item's title
-    #[arg(long)]
+    #[arg(short, long)]
     title: String,
     /// Item's content
-    #[arg(long)]
+    #[arg(short, long)]
     content: Option<String>,
 }
 
 #[derive(Args)]
 struct Remover {
     /// Give the item's id
-    #[arg(long)]
+    #[arg(short, long)]
     id: i32,
 }
 
 pub fn run() {
+    let conn = &mut init_db();
+
+    if !check_table_exist(conn) {
+        println!("The todo item table not exists");
+        if !create_table_if_not_exists(conn) {
+            eprintln!("Create todo items table failed!");
+            process::exit(1);
+        }
+    }
+
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Add(h) => {
-            println!(
-                "get title = {}, content = {:?}",
-                h.title,
-                h.content.as_deref()
-            )
+            let content = match h.content.as_deref() {
+                Some(s) => s,
+                None => "",
+            };
+            match Item::create_item(conn, &h.title, content) {
+                Ok(_) => {
+                    println!("Create succeed!");
+                }
+                Err(err) => {
+                    println!("Create error: {}!", err)
+                }
+            };
         }
         Commands::List => {
-            println!("get the list command!")
+            Item::get_all_item(conn);
         }
-        Commands::Rm(h) => {
-            println!("get the remove id = {}", h.id)
-        }
+        Commands::Rm(h) => match Item::delete_item_by_id(conn, h.id) {
+            Ok(num) => {
+                println!("Delete {num} items succeed!");
+            }
+            Err(err) => {
+                eprintln!("Delete item error: {}!", err)
+            }
+        },
     }
 }
