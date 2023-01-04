@@ -46,7 +46,7 @@ fn parse_config() -> Result<Config, String> {
     };
 
     Ok(Config {
-        db_url: database_url.clone(),
+        db_url: database_url,
     })
 }
 

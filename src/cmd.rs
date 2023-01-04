@@ -54,10 +54,7 @@ pub fn run() {
 
     match &cli.command {
         Commands::Add(h) => {
-            let content = match h.content.as_deref() {
-                Some(s) => s,
-                None => "",
-            };
+            let content = h.content.as_deref().unwrap_or("");
             match Item::create_item(conn, &h.title, content) {
                 Ok(_) => {
                     println!("Create succeed!");
