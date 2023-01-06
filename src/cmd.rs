@@ -43,11 +43,12 @@ pub fn run() {
     let conn = &mut init_db();
 
     if !check_table_exist(conn) {
-        println!("The todo item table not exists");
+        println!("The storage does not exists");
         if !create_table_if_not_exists(conn) {
             eprintln!("Create todo items table failed!");
             process::exit(1);
         }
+        println!("Init the data storage!")
     }
 
     let cli = Cli::parse();

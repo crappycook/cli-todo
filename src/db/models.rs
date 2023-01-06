@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::io::{self, Write};
 
 use super::schema::items;
 use diesel::{prelude::*, sql_types::Integer};
@@ -21,11 +22,20 @@ impl Item {
             .load::<Item>(conn)
             .expect("Error loading item");
 
-        println!("Total {} items.", records.len());
+        let stdout = io::stdout(); // get the global stdout entity
+        let mut handle = io::BufWriter::new(stdout); // optional: wrap that handle in a buffer
+
+        writeln!(handle, "Total {} items.", records.len()).unwrap();
 
         for r in records {
-            println!("id: {}, title: {}, content: {}", r.id, r.title, r.content);
+            writeln!(
+                handle,
+                "id: {}, title: {}, content: {}",
+                r.id, r.title, r.content
+            )
+            .unwrap();
         }
+        handle.flush().unwrap();
     }
 
     // Create todo item

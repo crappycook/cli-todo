@@ -4,11 +4,12 @@ pub mod schema;
 use self::models::*;
 use diesel::prelude::*;
 use dotenvy::dotenv;
-use std::{env, error, fmt, process};
+use std::{env, error, fmt, fs, process};
 
 // Getting Started: https://diesel.rs/guides/getting-started
 pub struct Config {
-    db_url: String,
+    db_name: String,
+    dir: String,
 }
 
 #[derive(Debug)]
@@ -33,6 +34,9 @@ pub fn init_db() -> SqliteConnection {
         process::exit(1)
     });
 
+    // Create db dir if not exists.
+    fs::create_dir_all(&cfg.dir).expect("Create dir failed!");
+
     establish_connection(&cfg)
 }
 
@@ -40,19 +44,25 @@ pub fn init_db() -> SqliteConnection {
 fn parse_config() -> Result<Config, String> {
     dotenv().ok();
 
-    let database_url = match env::var("DATABASE_URL") {
-        Ok(url) => url,
+    let db_name = match env::var("DATABASE_NAME") {
+        Ok(name) => name,
         Err(err) => return Err(err.to_string()),
     };
 
-    Ok(Config {
-        db_url: database_url,
-    })
+    let dir = match env::var("DIR") {
+        Ok(path) => path,
+        Err(err) => return Err(err.to_string()),
+    };
+
+    Ok(Config { db_name, dir })
 }
 
 // Connect sqlite
 pub fn establish_connection(db_cfg: &Config) -> SqliteConnection {
-    SqliteConnection::establish(db_cfg.db_url.as_str()).unwrap_or_else(|err| {
+    let db_url = format!("{}/{}", db_cfg.dir, db_cfg.db_name);
+    // let db_url = db_cfg.dir.to_string() + "/" + &db_cfg.db_name.to_string();
+    println!("db_url = {}", db_url);
+    SqliteConnection::establish(db_url.as_str()).unwrap_or_else(|err| {
         eprintln!("Connect sqlite error: {err}");
         process::exit(1)
     })
@@ -63,7 +73,7 @@ pub fn check_table_exist(conn: &mut SqliteConnection) -> bool {
     let res = diesel::sql_query(sql)
         .load::<QueryTableCount>(conn)
         .unwrap();
-    res.len() == 1
+    res.get(0).unwrap().cnt == 1
 }
 
 // Create items table if not exists
@@ -71,23 +81,24 @@ pub fn create_table_if_not_exists(conn: &mut SqliteConnection) -> bool {
     let sql = "CREATE TABLE IF NOT EXISTS `items` \
     (`id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, `title` VARCHAR NOT NULL, `content` TEXT NOT NULL)";
     let res = diesel::sql_query(sql).execute(conn);
-    println!("create table result {:?}", res);
     res.is_ok()
 }
 
 // Run Test: cargo test
 #[cfg(test)]
 mod tests {
-    #[test]
-    // Run specific test: cargo test test_insert_item
-    fn test_insert_item() {
+
+    use diesel::prelude::*;
+    fn setup(conn: &mut SqliteConnection) {
         use super::*;
-
-        let conn = &mut init_db();
-        let title = "Play Football";
-        let content = "At 15:00 this Friday";
-
-        assert!(Item::create_item(conn, title, content).is_ok())
+        if !check_table_exist(conn) {
+            println!("The storage does not exists");
+            if !create_table_if_not_exists(conn) {
+                eprintln!("Create todo items table failed!");
+                process::exit(1);
+            }
+            println!("Init the data storage!")
+        }
     }
 
     #[test]
@@ -97,6 +108,7 @@ mod tests {
         use super::*;
 
         let conn = &mut init_db();
+        setup(conn);
 
         let t = "Do Something";
         let c = "At 20:00 today";
