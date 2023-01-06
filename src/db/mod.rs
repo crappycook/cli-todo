@@ -60,8 +60,6 @@ fn parse_config() -> Result<Config, String> {
 // Connect sqlite
 pub fn establish_connection(db_cfg: &Config) -> SqliteConnection {
     let db_url = format!("{}/{}", db_cfg.dir, db_cfg.db_name);
-    // let db_url = db_cfg.dir.to_string() + "/" + &db_cfg.db_name.to_string();
-    println!("db_url = {}", db_url);
     SqliteConnection::establish(db_url.as_str()).unwrap_or_else(|err| {
         eprintln!("Connect sqlite error: {err}");
         process::exit(1)
